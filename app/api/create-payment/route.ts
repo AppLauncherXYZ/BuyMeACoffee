@@ -2,24 +2,62 @@ import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   try {
-    const { amount, type, tier } = await request.json()
+    const url = new URL(request.url)
+    const uid = url.searchParams.get("uid") || undefined
+    const projectIdFromQuery = url.searchParams.get("projectId") || undefined
 
-    // In a real implementation, you would use Stripe here
-    // For now, we'll simulate the payment process
+    const { amount, type, tier, projectId: projectIdFromBody } = await request.json()
 
-    console.log("[v0] Payment request:", { amount, type, tier })
+    const buyerUserId = uid
+    const projectId = projectIdFromQuery || projectIdFromBody
 
-    // Simulate payment processing delay
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    if (!buyerUserId || !projectId) {
+      return NextResponse.json({ success: false, error: "Missing uid or projectId in query/body" }, { status: 400 })
+    }
+    if (typeof amount !== "number" || amount <= 0) {
+      return NextResponse.json({ success: false, error: "Invalid amount" }, { status: 400 })
+    }
 
-    // Return success response with mock payment URL
-    return NextResponse.json({
-      success: true,
-      paymentUrl: `https://checkout.stripe.com/pay/mock-session-${Date.now()}`,
-      message: `Payment initiated for ${type === "subscription" ? `${tier} subscription` : `$${amount} coffee`}`,
+    // Build product details
+    const priceCents = Math.round(amount * 100)
+    const productName =
+      type === "subscription"
+        ? (tier ? `${tier} (monthly credits)` : `Subscription (monthly credits)`)
+        : `Coffee x${amount}`
+
+    const description =
+      type === "subscription"
+        ? "Recurring support converted to credits"
+        : "One-time support converted to credits"
+
+    const base = process.env.PARENT_API_BASE
+    if (!base) {
+      return NextResponse.json({ success: false, error: "PARENT_API_BASE env var not set" }, { status: 500 })
+    }
+
+    // Call the parent app to create a real Stripe Checkout Session
+    const res = await fetch(`${base}/api/credits/checkout?uid=${encodeURIComponent(buyerUserId)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        projectId,
+        productName,
+        description,
+        priceCents,
+      }),
     })
+
+    if (!res.ok) {
+      const text = await res.text()
+      console.error("Parent credits/checkout failed:", res.status, text)
+      return NextResponse.json({ success: false, error: "Failed to create checkout session" }, { status: 500 })
+    }
+
+    const data = await res.json()
+    return NextResponse.json({ success: true, url: data.url })
   } catch (error) {
-    console.error("[v0] Payment error:", error)
+    console.error("[create-payment] Error:", error)
     return NextResponse.json({ success: false, error: "Payment processing failed" }, { status: 500 })
   }
 }
+
