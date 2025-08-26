@@ -2,9 +2,6 @@
 
 import * as React from 'react';
 
-// Hard fallback to your prod parent URL if the env var isn't present.
-const PARENT_BASE = process.env.NEXT_PUBLIC_PARENT_API_BASE || 'https://applauncher.xyz';
-
 export default function Page() {
   const [loading, setLoading] = React.useState<string | null>(null);
   const [userId, setUserId] = React.useState<string | null>(null);
@@ -12,14 +9,14 @@ export default function Page() {
   const [showPopupDialog, setShowPopupDialog] = React.useState(false);
   const [blockedPaymentUrl, setBlockedPaymentUrl] = React.useState<string | null>(null);
 
-  // Read user_id & project_id from URL once on mount
+  // Read user_id & project_id (and fallbacks) from URL once on mount
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setUserId(params.get('user_id') || params.get('userId') || params.get('uid'));
     setProjectId(params.get('project_id') || params.get('projectId'));
   }, []);
 
-  // BUY: body-first (user/project go ONLY in JSON body), local proxy handles the parent call
+  // BUY: body-first; local proxy handles parent call
   const handlePayment = async (amount: number, type: 'subscription' | 'one-time', tier?: string) => {
     const buttonId = tier || `${type}-${amount}`;
     setLoading(buttonId);
@@ -36,6 +33,7 @@ export default function Page() {
           amount,
           type,
           tier,
+          // send the exact keys your route expects
           user_id: userId,
           project_id: projectId,
         }),
@@ -61,7 +59,7 @@ export default function Page() {
     }
   };
 
-  // CTA spend: call the parent app directly (body-only) with the same hard fallback
+  // CTA spend: call local proxy (body-first) to avoid CORS; send both key styles
   const spendCredits = async (cost: number) => {
     setLoading(`cta-${cost}`);
     try {
@@ -70,29 +68,21 @@ export default function Page() {
         return;
       }
 
-      const resp = await fetch(`${PARENT_BASE}/api/credits/check-and-debit`, {
+      const resp = await fetch('/api/credits/check-and-debit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: userId,       // parent expects camelCase; this matches your parent route
+          // send both snake_case and camelCase for maximum compatibility
+          user_id: userId,
+          userId: userId,
+          project_id: projectId,
           projectId: projectId,
           cost,
           metadata: { cta: 'example' },
         }),
-        // credentials: 'include', // uncomment if your parent route requires cookie auth
       });
 
-      // Robust parsing so we see real server body if something returns HTML
-      const text = await resp.text();
-      let data: any;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        throw new Error(
-          `Non-JSON response from parent (status ${resp.status}). First 300 chars:\n${text.slice(0, 300)}`
-        );
-      }
-
+      const data = await resp.json();
       if (resp.ok && data?.ok) {
         alert(`CTA succeeded. Remaining credits: ${data.creditsRemaining}`);
       } else {
