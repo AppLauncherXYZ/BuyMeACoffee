@@ -2,10 +2,6 @@ import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   try {
-    const url = new URL(request.url)
-    // const userId = url.searchParams.get("user_id") || undefined
-    // const projectIdFromQuery = url.searchParams.get("project_id") || undefined
-
     const { amount, type, tier, project_id, user_id } = await request.json()
 
     if (!user_id || !project_id) {
@@ -27,9 +23,9 @@ export async function POST(request: NextRequest) {
         ? "Recurring support converted to credits"
         : "One-time support converted to credits"
 
-    const base = process.env.PARENT_API_BASE
+    const base = process.env.NEXT_PUBLIC_PARENT_API_BASE
     if (!base) {
-      return NextResponse.json({ success: false, error: "PARENT_API_BASE env var not set" }, { status: 500 })
+      return NextResponse.json({ success: false, error: "NEXT_PUBLIC_PARENT_API_BASE env var not set" }, { status: 500 })
     }
 
     // Call the parent app to create a real Stripe Checkout Session
