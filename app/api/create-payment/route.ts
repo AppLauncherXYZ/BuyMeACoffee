@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Call the parent app to create a real Stripe Checkout Session
-    const res = await fetch(`${base}/api/credits/checkout?uid=${encodeURIComponent(buyerUserId)}`, {
+    const res = await fetch(`${base}/api/credits/checkout?user_id=${encodeURIComponent(buyerUserId)}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

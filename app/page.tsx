@@ -19,12 +19,12 @@ export default function Page() {
     setLoading(buttonId);
     try {
       if (!uid || !projectId) {
-        alert('Missing uid or projectId in URL. Expected ?uid=USER_ID&projectId=PROJECT_ID');
+        alert('Missing uid or projectId in URL. Expected ?user_id=USER_ID&projectId=PROJECT_ID');
         return;
       }
 
       const res = await fetch(
-        `/api/create-payment?uid=${encodeURIComponent(uid)}&projectId=${encodeURIComponent(projectId)}`,
+        `/api/create-payment?user_id=${encodeURIComponent(uid)}&projectId=${encodeURIComponent(projectId)}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -58,7 +58,7 @@ export default function Page() {
 
       // If you added the proxy route shown earlier:
       const res = await fetch(
-        `/api/credits/check-and-debit?uid=${encodeURIComponent(uid)}&projectId=${encodeURIComponent(projectId)}`,
+        `/api/credits/check-and-debit?user_id=${encodeURIComponent(uid)}&projectId=${encodeURIComponent(projectId)}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -98,7 +98,7 @@ export default function Page() {
           }}
         >
           Missing <code>uid</code> and/or <code>projectId</code> in the URL. Expected
-          {' '}<code>?uid=USER_ID&projectId=PROJECT_ID</code>.
+          {' '}<code>?user_id=USER_ID&projectId=PROJECT_ID</code>.
         </div>
       ) : (
         <div
