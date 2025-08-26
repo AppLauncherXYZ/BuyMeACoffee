@@ -23,9 +23,12 @@ export async function POST(request: NextRequest) {
         ? "Recurring support converted to credits"
         : "One-time support converted to credits"
 
-    const base = process.env.NEXT_PUBLIC_PARENT_API_BASE
+    const base = process.env.NEXT_PUBLIC_PARENT_API_BASE || "https://applauncher.xyz"
     if (!base) {
       return NextResponse.json({ success: false, error: "NEXT_PUBLIC_PARENT_API_BASE env var not set" }, { status: 500 })
+    }
+    if (!process.env.NEXT_PUBLIC_PARENT_API_BASE) {
+      console.log("NEXT_PUBLIC_PARENT_API_BASE env var not set")
     }
 
     // Call the parent app to create a real Stripe Checkout Session
