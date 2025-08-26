@@ -4,31 +4,31 @@ import * as React from 'react';
 
 export default function Page() {
   const [loading, setLoading] = React.useState<string | null>(null);
-  const [uid, setUid] = React.useState<string | null>(null);
+  const [userId, setUserId] = React.useState<string | null>(null);
   const [projectId, setProjectId] = React.useState<string | null>(null);
 
-  // Read uid & projectId from URL once on mount
+  // Read user_id & project_id from URL once on mount
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    setUid(params.get('uid'));
-    setProjectId(params.get('projectId'));
+    setUserId(params.get('user_id'));
+    setProjectId(params.get('project_id'));
   }, []);
 
   const handlePayment = async (amount: number, type: 'subscription' | 'one-time', tier?: string) => {
     const buttonId = tier || `${type}-${amount}`;
     setLoading(buttonId);
     try {
-      if (!uid || !projectId) {
-        alert('Missing uid or projectId in URL. Expected ?user_id=USER_ID&projectId=PROJECT_ID');
+      if (!userId || !projectId) {
+        alert('Missing user_id or project_id in URL. Expected ?user_id=USER_ID&project_id=PROJECT_ID');
         return;
       }
 
       const res = await fetch(
-        `/api/create-payment?user_id=${encodeURIComponent(uid)}&projectId=${encodeURIComponent(projectId)}`,
+        `/api/create-payment?user_id=${encodeURIComponent(userId)}&project_id=${encodeURIComponent(projectId)}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount, type, tier, projectId }),
+          body: JSON.stringify({ amount, type, tier, project_id: projectId, user_id: userId }),
         }
       );
 
@@ -51,18 +51,18 @@ export default function Page() {
   const spendCredits = async (cost: number) => {
     setLoading(`cta-${cost}`);
     try {
-      if (!uid || !projectId) {
-        alert('Missing uid or projectId in URL.');
+      if (!userId || !projectId) {
+        alert('Missing user_id or project_id in URL.');
         return;
       }
 
       // If you added the proxy route shown earlier:
       const res = await fetch(
-        `/api/credits/check-and-debit?user_id=${encodeURIComponent(uid)}&projectId=${encodeURIComponent(projectId)}`,
+        `/api/credits/check-and-debit?user_id=${encodeURIComponent(userId)}&project_id=${encodeURIComponent(projectId)}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ cost, projectId, metadata: { cta: 'example' } }),
+          body: JSON.stringify({ cost, project_id: projectId, metadata: { cta: 'example' } }),
         }
       );
 
@@ -87,7 +87,7 @@ export default function Page() {
         Buy credits to unlock actions. 1 USD cent = 1 appdollar.
       </p>
 
-      {!uid || !projectId ? (
+      {!userId || !projectId ? (
         <div
           style={{
             background: '#fff3cd',
@@ -97,8 +97,8 @@ export default function Page() {
             marginBottom: 16,
           }}
         >
-          Missing <code>uid</code> and/or <code>projectId</code> in the URL. Expected
-          {' '}<code>?user_id=USER_ID&projectId=PROJECT_ID</code>.
+          Missing <code>user_id</code> and/or <code>project_id</code> in the URL. Expected
+          {' '}<code>?user_id=USER_ID&project_id=PROJECT_ID</code>.
         </div>
       ) : (
         <div
@@ -111,7 +111,7 @@ export default function Page() {
             fontSize: 14,
           }}
         >
-          <div><strong>User:</strong> {uid}</div>
+          <div><strong>User:</strong> {userId}</div>
           <div><strong>Project:</strong> {projectId}</div>
         </div>
       )}

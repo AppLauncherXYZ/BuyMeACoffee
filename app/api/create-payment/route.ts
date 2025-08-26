@@ -3,16 +3,13 @@ import { type NextRequest, NextResponse } from "next/server"
 export async function POST(request: NextRequest) {
   try {
     const url = new URL(request.url)
-    const uid = url.searchParams.get("uid") || undefined
-    const projectIdFromQuery = url.searchParams.get("projectId") || undefined
+    // const userId = url.searchParams.get("user_id") || undefined
+    // const projectIdFromQuery = url.searchParams.get("project_id") || undefined
 
-    const { amount, type, tier, projectId: projectIdFromBody } = await request.json()
+    const { amount, type, tier, project_id, user_id } = await request.json()
 
-    const buyerUserId = uid
-    const projectId = projectIdFromQuery || projectIdFromBody
-
-    if (!buyerUserId || !projectId) {
-      return NextResponse.json({ success: false, error: "Missing uid or projectId in query/body" }, { status: 400 })
+    if (!user_id || !project_id) {
+      return NextResponse.json({ success: false, error: "Missing user_id or project_id in query/body" }, { status: 400 })
     }
     if (typeof amount !== "number" || amount <= 0) {
       return NextResponse.json({ success: false, error: "Invalid amount" }, { status: 400 })
@@ -36,11 +33,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Call the parent app to create a real Stripe Checkout Session
-    const res = await fetch(`${base}/api/credits/checkout?user_id=${encodeURIComponent(buyerUserId)}`, {
+    console.log("Creating checkout session for user_id:", user_id, "and project_id:", project_id)
+    const res = await fetch(`${base}/api/credits/checkout`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        projectId,
+        user_id: user_id,
+        project_id: project_id,
         productName,
         description,
         priceCents,
