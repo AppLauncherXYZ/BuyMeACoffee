@@ -69,7 +69,7 @@ export default function Page() {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ cost, project_id: projectId, metadata: { cta: 'example' } }),
+          body: JSON.stringify({ cost, project_id: projectId, user_id:userId, metadata: { cta: 'example' } }),
         }
       );
 
