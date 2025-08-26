@@ -2,6 +2,9 @@
 
 import * as React from 'react';
 
+// Hard fallback to your prod parent URL if the env var isn't present.
+const PARENT_BASE = process.env.NEXT_PUBLIC_PARENT_API_BASE || 'https://applauncher.xyz';
+
 export default function Page() {
   const [loading, setLoading] = React.useState<string | null>(null);
   const [userId, setUserId] = React.useState<string | null>(null);
@@ -12,10 +15,11 @@ export default function Page() {
   // Read user_id & project_id from URL once on mount
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    setUserId(params.get('user_id'));
-    setProjectId(params.get('project_id'));
+    setUserId(params.get('user_id') || params.get('userId') || params.get('uid'));
+    setProjectId(params.get('project_id') || params.get('projectId'));
   }, []);
 
+  // BUY: body-first (user/project go ONLY in JSON body), local proxy handles the parent call
   const handlePayment = async (amount: number, type: 'subscription' | 'one-time', tier?: string) => {
     const buttonId = tier || `${type}-${amount}`;
     setLoading(buttonId);
@@ -25,18 +29,21 @@ export default function Page() {
         return;
       }
 
-      const res = await fetch(
-        `/api/create-payment?user_id=${encodeURIComponent(userId)}&project_id=${encodeURIComponent(projectId)}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount, type, tier, project_id: projectId, user_id: userId }),
-        }
-      );
+      const res = await fetch('/api/create-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount,
+          type,
+          tier,
+          user_id: userId,
+          project_id: projectId,
+        }),
+      });
 
       const data = await res.json();
       if (res.ok && data?.success && data?.url) {
-        const popup = window.open(data.url as string, "_blank"); // Open in new tab
+        const popup = window.open(data.url as string, '_blank'); // Open in new tab
         if (!popup) {
           // Popup was blocked, show dialog
           setBlockedPaymentUrl(data.url as string);
@@ -54,7 +61,7 @@ export default function Page() {
     }
   };
 
-  // Optional: example CTA that spends credits
+  // CTA spend: call the parent app directly (body-only) with the same hard fallback
   const spendCredits = async (cost: number) => {
     setLoading(`cta-${cost}`);
     try {
@@ -63,18 +70,30 @@ export default function Page() {
         return;
       }
 
-      // If you added the proxy route shown earlier:
-      const res = await fetch(
-        `/api/credits/check-and-debit?user_id=${encodeURIComponent(userId)}&project_id=${encodeURIComponent(projectId)}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ cost, project_id: projectId, user_id:userId, metadata: { cta: 'example' } }),
-        }
-      );
+      const resp = await fetch(`${PARENT_BASE}/api/credits/check-and-debit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userId,       // parent expects camelCase; this matches your parent route
+          projectId: projectId,
+          cost,
+          metadata: { cta: 'example' },
+        }),
+        // credentials: 'include', // uncomment if your parent route requires cookie auth
+      });
 
-      const data = await res.json();
-      if (res.ok && data?.ok) {
+      // Robust parsing so we see real server body if something returns HTML
+      const text = await resp.text();
+      let data: any;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(
+          `Non-JSON response from parent (status ${resp.status}). First 300 chars:\n${text.slice(0, 300)}`
+        );
+      }
+
+      if (resp.ok && data?.ok) {
         alert(`CTA succeeded. Remaining credits: ${data.creditsRemaining}`);
       } else {
         alert(`Not enough credits. Remaining: ${data?.creditsRemaining ?? 0}`);
@@ -89,7 +108,7 @@ export default function Page() {
 
   const handleOpenPaymentLink = () => {
     if (blockedPaymentUrl) {
-      window.open(blockedPaymentUrl, "_blank");
+      window.open(blockedPaymentUrl, '_blank');
       setShowPopupDialog(false);
       setBlockedPaymentUrl(null);
     }
@@ -117,8 +136,8 @@ export default function Page() {
             marginBottom: 16,
           }}
         >
-          Missing <code>user_id</code> and/or <code>project_id</code> in the URL. Expected
-          {' '}<code>?user_id=USER_ID&project_id=PROJECT_ID</code>.
+          Missing <code>user_id</code> and/or <code>project_id</code> in the URL. Expected{' '}
+          <code>?user_id=USER_ID&project_id=PROJECT_ID</code>.
         </div>
       ) : (
         <div
