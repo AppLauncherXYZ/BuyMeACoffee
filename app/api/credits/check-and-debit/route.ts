@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Prefer server env var; fall back to NEXT_PUBLIC or hardcoded domain
 const PARENT_BASE =
-  process.env.PARENT_API_BASE ||
   process.env.NEXT_PUBLIC_PARENT_API_BASE ||
   'https://applauncher.xyz';
 
