@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   try {
-    const { amount, type, tier, project_id, user_id } = await request.json()
+    const { amount, type, tier, project_id, user_id, interval = 'month', intervalCount = 1 } = await request.json()
 
     if (!user_id || !project_id) {
       return NextResponse.json({ success: false, error: "Missing user_id or project_id in query/body" }, { status: 400 })
@@ -31,17 +31,22 @@ export async function POST(request: NextRequest) {
       console.log("NEXT_PUBLIC_PARENT_API_BASE env var not set")
     }
 
-    // Call the parent app to create a real Stripe Checkout Session
-    console.log("Creating checkout session for user_id:", user_id, "and project_id:", project_id)
+    console.log("Creating checkout session for user_id:", user_id, "and project_id:", project_id, "type:", type)
+
     const res = await fetch(`${base}/api/credits/checkout`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        user_id: user_id,
-        project_id: project_id,
+        // required for parent
+        user_id,
+        project_id,
         productName,
         description,
         priceCents,
+        // NEW: tell parent this is subscription (or one-time) and the cadence
+        type,                 // 'subscription' | 'one-time'
+        interval,             // 'day' | 'week' | 'month' | 'year'  (default 'month')
+        intervalCount,        // integer >= 1   (default 1)
       }),
     })
 
