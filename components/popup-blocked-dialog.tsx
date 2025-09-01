@@ -4,13 +4,15 @@ interface PopupBlockedDialogProps {
     isOpen: boolean;
     onOpenPayment: () => void;
     onClose: () => void;
+    id?: string;
 }
 
-export function PopupBlockedDialog({ isOpen, onOpenPayment, onClose }: PopupBlockedDialogProps) {
+export function PopupBlockedDialog({ isOpen, onOpenPayment, onClose, id }: PopupBlockedDialogProps) {
     if (!isOpen) return null;
 
     return (
         <div
+            id={id || "popup-blocked-dialog"}
             style={{
                 position: 'fixed',
                 top: 0,
@@ -26,6 +28,7 @@ export function PopupBlockedDialog({ isOpen, onOpenPayment, onClose }: PopupBloc
             onClick={onClose}
         >
             <div
+                id="payment-dialog-container"
                 style={{
                     background: 'white',
                     padding: 24,
@@ -37,14 +40,15 @@ export function PopupBlockedDialog({ isOpen, onOpenPayment, onClose }: PopupBloc
                 }}
                 onClick={(e) => e.stopPropagation()}
             >
-                <h3 style={{ margin: '0 0 16px 0', fontSize: 18, fontWeight: 600 }}>
+                <h3 id="payment-dialog-title" style={{ margin: '0 0 16px 0', fontSize: 18, fontWeight: 600 }}>
                     Payment Link Ready
                 </h3>
-                <p style={{ margin: '0 0 20px 0', color: '#555', lineHeight: 1.5 }}>
+                <p id="payment-dialog-description" style={{ margin: '0 0 20px 0', color: '#555', lineHeight: 1.5 }}>
                     Your browser blocked the automatic popup. Click the button below to open your payment page.
                 </p>
-                <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                <div id="payment-dialog-actions" style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
                     <button
+                        id="open-payment-button"
                         onClick={onOpenPayment}
                         style={{
                             padding: '12px 24px',
@@ -59,6 +63,7 @@ export function PopupBlockedDialog({ isOpen, onOpenPayment, onClose }: PopupBloc
                         Open Payment Page
                     </button>
                     <button
+                        id="cancel-payment-button"
                         onClick={onClose}
                         style={{
                             padding: '12px 24px',

@@ -104,16 +104,17 @@ export default function Page() {
   };
 
   return (
-    <main style={{ maxWidth: 720, margin: '0 auto', padding: 24, fontFamily: 'ui-sans-serif, system-ui' }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Support this App</h1>
-      <p style={{ color: '#555', marginBottom: 24 }}>
+    <main id="main-container" style={{ maxWidth: 720, margin: '0 auto', padding: 24, fontFamily: 'ui-sans-serif, system-ui' }}>
+      <h1 id="support-header" style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Support this App</h1>
+      <p id="support-description" style={{ color: '#555', marginBottom: 24 }}>
         Buy credits to unlock actions. 1 USD cent = 1 AppDollar.
       </p>
 
-      <LoginStatusBanner auth={auth} />
+      <LoginStatusBanner id="login-status-banner" auth={auth} />
 
-      <section style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+      <section id="one-time-payment-section" style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
         <button
+          id="buy-3-button"
           disabled={loading !== null}
           onClick={() => handlePayment(3, 'one-time')}
           style={btnStyle(loading === 'one-time-3')}
@@ -121,6 +122,7 @@ export default function Page() {
           {loading === 'one-time-3' ? 'Processing…' : 'Buy $3 (300)'}
         </button>
         <button
+          id="buy-5-button"
           disabled={loading !== null}
           onClick={() => handlePayment(5, 'one-time')}
           style={btnStyle(loading === 'one-time-5')}
@@ -128,6 +130,7 @@ export default function Page() {
           {loading === 'one-time-5' ? 'Processing…' : 'Buy $5 (500)'}
         </button>
         <button
+          id="buy-10-button"
           disabled={loading !== null}
           onClick={() => handlePayment(10, 'one-time')}
           style={btnStyle(loading === 'one-time-10')}
@@ -136,10 +139,11 @@ export default function Page() {
         </button>
       </section>
 
-      <hr style={{ margin: '24px 0', border: 0, borderTop: '1px solid #eee' }} />
+      <hr id="section-divider" style={{ margin: '24px 0', border: 0, borderTop: '1px solid #eee' }} />
 
-      <section style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+      <section id="credit-spending-section" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
         <button
+          id="use-25-credits-button"
           disabled={loading !== null}
           onClick={() => spendCredits(25)}
           style={btnOutline(loading === 'cta-25')}
@@ -147,6 +151,7 @@ export default function Page() {
           {loading === 'cta-25' ? 'Debiting…' : 'Use 25 credits'}
         </button>
         <button
+          id="use-100-credits-button"
           disabled={loading !== null}
           onClick={() => spendCredits(100)}
           style={btnOutline(loading === 'cta-100')}
@@ -156,6 +161,7 @@ export default function Page() {
       </section>
 
       <PopupBlockedDialog
+        id="popup-blocked-dialog"
         isOpen={showPopupDialog}
         onOpenPayment={handleOpenPaymentLink}
         onClose={handleCloseDialog}
