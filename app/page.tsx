@@ -1,28 +1,23 @@
 'use client';
 
 import * as React from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { LoginStatusBanner } from '@/components/login-status-banner';
+import { PopupBlockedDialog } from '@/components/popup-blocked-dialog';
 
 export default function Page() {
+  const auth = useAuth();
   const [loading, setLoading] = React.useState<string | null>(null);
-  const [userId, setUserId] = React.useState<string | null>(null);
-  const [projectId, setProjectId] = React.useState<string | null>(null);
   const [showPopupDialog, setShowPopupDialog] = React.useState(false);
   const [blockedPaymentUrl, setBlockedPaymentUrl] = React.useState<string | null>(null);
-
-  // Read user_id & project_id (and fallbacks) from URL once on mount
-  React.useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setUserId(params.get('user_id') || params.get('userId') || params.get('uid'));
-    setProjectId(params.get('project_id') || params.get('projectId'));
-  }, []);
 
   // BUY: body-first; local proxy handles parent call
   const handlePayment = async (amount: number, type: 'subscription' | 'one-time', tier?: string) => {
     const buttonId = tier || `${type}-${amount}`;
     setLoading(buttonId);
     try {
-      if (!userId || !projectId) {
-        alert('Missing user_id or project_id in URL. Expected ?user_id=USER_ID&project_id=PROJECT_ID');
+      if (!auth.isLoggedIn) {
+        alert('You are not logged in. Please log in to continue.');
         return;
       }
 
@@ -34,8 +29,8 @@ export default function Page() {
           type,
           tier,
           // send the exact keys your route expects
-          user_id: userId,
-          project_id: projectId,
+          user_id: auth.userId,
+          project_id: auth.projectId,
         }),
       });
 
@@ -63,8 +58,8 @@ export default function Page() {
   const spendCredits = async (cost: number) => {
     setLoading(`cta-${cost}`);
     try {
-      if (!userId || !projectId) {
-        alert('Missing user_id or project_id in URL.');
+      if (!auth.isLoggedIn) {
+        alert('You are not logged in. Please log in to continue.');
         return;
       }
 
@@ -73,10 +68,10 @@ export default function Page() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           // send both snake_case and camelCase for maximum compatibility
-          user_id: userId,
-          userId: userId,
-          project_id: projectId,
-          projectId: projectId,
+          user_id: auth.userId,
+          userId: auth.userId,
+          project_id: auth.projectId,
+          projectId: auth.projectId,
           cost,
           metadata: { cta: 'example' },
         }),
@@ -113,37 +108,10 @@ export default function Page() {
     <main style={{ maxWidth: 720, margin: '0 auto', padding: 24, fontFamily: 'ui-sans-serif, system-ui' }}>
       <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Support this App</h1>
       <p style={{ color: '#555', marginBottom: 24 }}>
-        Buy credits to unlock actions. 1 USD cent = 1 appdollar.
+        Buy credits to unlock actions. 1 USD cent = 1 AppDollar.
       </p>
 
-      {!userId || !projectId ? (
-        <div
-          style={{
-            background: '#fff3cd',
-            border: '1px solid #ffeeba',
-            padding: 12,
-            borderRadius: 8,
-            marginBottom: 16,
-          }}
-        >
-          Missing <code>user_id</code> and/or <code>project_id</code> in the URL. Expected{' '}
-          <code>?user_id=USER_ID&project_id=PROJECT_ID</code>.
-        </div>
-      ) : (
-        <div
-          style={{
-            background: '#e7f5ff',
-            border: '1px solid #a5d8ff',
-            padding: 12,
-            borderRadius: 8,
-            marginBottom: 16,
-            fontSize: 14,
-          }}
-        >
-          <div><strong>User:</strong> {userId}</div>
-          <div><strong>Project:</strong> {projectId}</div>
-        </div>
-      )}
+      <LoginStatusBanner auth={auth} />
 
       <section style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
         <button
@@ -188,74 +156,11 @@ export default function Page() {
         </button>
       </section>
 
-      {/* Popup blocked dialog */}
-      {showPopupDialog && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-          onClick={handleCloseDialog}
-        >
-          <div
-            style={{
-              background: 'white',
-              padding: 24,
-              borderRadius: 12,
-              maxWidth: 400,
-              width: '90%',
-              textAlign: 'center',
-              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ margin: '0 0 16px 0', fontSize: 18, fontWeight: 600 }}>
-              Payment Link Ready
-            </h3>
-            <p style={{ margin: '0 0 20px 0', color: '#555', lineHeight: 1.5 }}>
-              Your browser blocked the automatic popup. Click the button below to open your payment page.
-            </p>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-              <button
-                onClick={handleOpenPaymentLink}
-                style={{
-                  padding: '12px 24px',
-                  borderRadius: 8,
-                  border: '1px solid #111',
-                  background: '#111',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                }}
-              >
-                Open Payment Page
-              </button>
-              <button
-                onClick={handleCloseDialog}
-                style={{
-                  padding: '12px 24px',
-                  borderRadius: 8,
-                  border: '1px solid #ddd',
-                  background: 'white',
-                  color: '#666',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <PopupBlockedDialog
+        isOpen={showPopupDialog}
+        onOpenPayment={handleOpenPaymentLink}
+        onClose={handleCloseDialog}
+      />
     </main>
   );
 }
