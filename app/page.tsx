@@ -28,7 +28,6 @@ export default function Page() {
           amount,
           type,
           tier,
-          // send the exact keys your route expects
           user_id: auth.userId,
           project_id: auth.projectId,
         }),
