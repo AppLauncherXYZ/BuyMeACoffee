@@ -36,6 +36,32 @@ export function LoginStatusBanner({ auth }: LoginStatusBannerProps) {
         >
             <div><strong>User:</strong> {auth.userId}</div>
             <div><strong>Project:</strong> {auth.projectId}</div>
+            {auth.isAdmin && (
+                <div style={{
+                    marginTop: 8,
+                    padding: 4,
+                    background: '#d4edda',
+                    border: '1px solid #c3e6cb',
+                    borderRadius: 4,
+                    color: '#155724',
+                    fontWeight: 'bold'
+                }}>
+                    You are an admin
+                </div>
+            )}
+            {auth.isAdminLoading && (
+                <div style={{
+                    marginTop: 8,
+                    padding: 4,
+                    background: '#fff3cd',
+                    border: '1px solid #ffeeba',
+                    borderRadius: 4,
+                    color: '#856404',
+                    fontStyle: 'italic'
+                }}>
+                    Checking admin status...
+                </div>
+            )}
         </div>
     );
 }
